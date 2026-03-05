@@ -1,4 +1,4 @@
-FROM rust:1.76 as builder
+FROM rust:latest AS builder
 
 WORKDIR /app
 
@@ -14,6 +14,6 @@ FROM debian:bookworm-slim
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/search-api /usr/local/bin/app
+COPY --from=builder /app/target/release/clockdata /usr/local/bin/app
 
 CMD ["app"]
