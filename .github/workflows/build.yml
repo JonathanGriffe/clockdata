@@ -1,0 +1,62 @@
+name: Tag and Build
+
+on:
+  push:
+
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+
+jobs:
+  tag-and-build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+    env:
+      CI_BRANCH: ${{ github.ref_name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute next semantic version
+        id: tag
+        run: ./scripts/tag.sh
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push image
+        run: |
+          docker build -t $DOCKERHUB_USERNAME/clockdata:$VERSION .
+          docker push $DOCKERHUB_USERNAME/clockdata:$VERSION
+
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: tag-and-build
+    env:
+      CI_BRANCH: ${{ github.ref_name }}
+    steps:
+      - name: Checkout infra repo
+        uses: actions/checkout@v4
+        with:
+          repository: JonathanGriffe/beatguessr-infra
+          token: ${{ secrets.DEPLOY_PAT }}
+
+      - name: Update infra
+        env:
+          VERSION: ${{ needs.tag-and-build.outputs.version }}
+        run: |
+          sed -i "s/appVersion: .*/appVersion: $VERSION/" helm/clockdata/Chart.yaml
+
+          git add .
+
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git commit -m "chore: update clockdata Docker image to $VERSION"
+          git push origin main
