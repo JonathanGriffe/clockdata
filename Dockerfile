@@ -1,4 +1,4 @@
-FROM rust:1.76 as builder
+FROM rust:stable AS builder
 
 WORKDIR /app
 
@@ -12,8 +12,14 @@ RUN cargo build --release
 
 FROM debian:bookworm-slim
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libssl3 \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-COPY --from=builder /app/target/release/search-api /usr/local/bin/app
+COPY --from=builder /app/target/release/clockdata /usr/local/bin/app
 
 CMD ["app"]
