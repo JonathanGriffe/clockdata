@@ -31,7 +31,10 @@ pub struct AppStatus {
 }
 
 pub async fn get_argocd_status(env: &str) -> AppStatus {
-    let client = Client::new();
+    let client = Client::builder()
+        .danger_accept_invalid_certs(true)
+        .build()
+        .expect("Failed to build HTTP client");
     let argocd_uri = env::var("ARGOCD_URI").expect("ARGOCD_URI must be set");
 
     let url = format!("{}/api/v1/applications/beatguessr-{}", argocd_uri, env);
