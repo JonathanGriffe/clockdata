@@ -37,7 +37,8 @@ pub async fn get_argocd_status(env: &str) -> AppStatus {
         .expect("Failed to build HTTP client");
     let argocd_uri = env::var("ARGOCD_URI").expect("ARGOCD_URI must be set");
     let token = std::env::var("ARGOCD_TOKEN").expect("ARGOCD_TOKEN environment variable not set");
-
+    println!("{}", argocd_uri);
+    println!("{}", token);
     let url = format!("{}/api/v1/applications/beatguessr-{}", argocd_uri, env);
     let response = client
         .get(&url)
