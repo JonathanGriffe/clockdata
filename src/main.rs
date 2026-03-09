@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{env, net::SocketAddr};
 
 use axum::{Extension, Router, middleware::from_fn, routing::get};
 use clockdata::routes::{require_token, route};
@@ -6,7 +6,10 @@ use elasticsearch::{Elasticsearch, http::transport::Transport};
 
 #[tokio::main]
 async fn main() {
-    let transport = Transport::single_node("http://localhost:9200").unwrap();
+    let transport = Transport::single_node(
+        &env::var("ELASTICSEARCH_URI").expect("ELASTICSEARCH_URI must be set"),
+    )
+    .unwrap();
     let client = Elasticsearch::new(transport);
 
     let app = Router::new()
